@@ -19,13 +19,14 @@ namespace SitecoreScheduledPublishing
         public static async Task RunAsync([TimerTrigger("0 0 */2 * * *")]TimerInfo myTimer, TraceWriter log)
         {     
             var jobOptions = CreateSitePublishOptions();
+            
+            using(var client = new HttpClient())
+            {
+                var result = await client.PutAsync(Environment.GetEnvironmentVariable("SiteUrl") + JobQueueUrl,
+                       new StringContent(JsonConvert.SerializeObject(jobOptions), Encoding.UTF8, "application/json"));
 
-            var client = new HttpClient();
-
-            var result = await client.PutAsync(Environment.GetEnvironmentVariable("SiteUrl") + JobQueueUrl,
-                   new StringContent(JsonConvert.SerializeObject(jobOptions), Encoding.UTF8, "application/json"));
-
-            log.Info("Success: " + result.IsSuccessStatusCode);
+                log.Info("Success: " + result.IsSuccessStatusCode);
+            }
         }
 
         private static PublishOptions CreateSitePublishOptions()
